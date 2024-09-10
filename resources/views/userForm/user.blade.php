@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>User Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -92,8 +94,13 @@
         </tbody>
     </table>
 
-    <script>
+    <script>        
         $(document).ready(function() {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
             $("#userForm").validate({
                 rules: {
                     name: {
@@ -113,7 +120,6 @@
                         required: true
                     },
                     profilePic: {
-                        required: true,
                         extension: "jpg|jpeg|png|gif" 
                     },
                     "hobbies[]": {
@@ -144,7 +150,6 @@
                         required: "Please select your gender"
                     },
                     profilePic: {
-                        required: "Please upload your profile picture",
                         extension: "Allowed file types are jpg, jpeg, png, gif"
                     },
                     "hobbies[]": {
@@ -165,8 +170,8 @@
                     }
                 },
                 submitHandler: function(form) {
-                    alert('Form is valid and ready for submission!');
-                    var formData = new FormData(this);
+                    event.preventDefault();
+                    var formData = new FormData(form);
 
                     $.ajax({
                         url: '/api/users',
@@ -178,24 +183,23 @@
                             alert('User created successfully');
                             console.log(response);
                         },
-                        error: function(response) {
-                            console.log(response);
-                            alert('Error: ' + response.responseJSON.message);
+                        error: function(xhr, status, error) {
+                            console.log(xhr.responseJSON);
+                            alert('Error: ' + xhr.responseJSON.message);
                         }
                     });
-                        form.submit();
-                    }
-                });
+                }
+            });
            
-                $.ajax({
-                    url: '/api/states',
-                    type: 'GET',
-                    success: function(states) {
-                        states.forEach(function(state) {
-                            $('#state').append(`<option value="${state.id}">${state.stateName}</option>`);
-                        });
-                    }
-                });
+            $.ajax({
+                url: '/api/states',
+                type: 'GET',
+                success: function(states) {
+                    states.forEach(function(state) {
+                        $('#state').append(`<option value="${state.id}">${state.stateName}</option>`);
+                    });
+                }
+            });
 
             // Load cities based on selected state
             $('#state').change(function() {

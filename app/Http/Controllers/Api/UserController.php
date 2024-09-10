@@ -17,23 +17,25 @@ class UserController extends Controller
 
     public function store(UserRequest $request)
     {
-        $validatedData = $request->all();
+        $user = new User();
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->contactNumber = $request->input('contactNumber');
+        $user->gender = $request->input('gender');
         
         if ($request->hasFile('profilePic')) {
-            $path = $request->file('profilePic')->store('profilePics');
-            $validatedData['profilePic'] = $path;
+            $file = $request->file('profilePic');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $filename);
+            $user->profilePic = $filename;
         }
 
-        $user = User::create($validatedData);
+        $user->save();
+        $user->hobbies()->sync($request->input('hobbies'));
+        $user->save();
 
-        // Attach hobbies
-        if ($request->hobbies) {
-            $user->hobbies()->attach($request->hobbies);
-        }
-
-        return response()->json($user);
+        return response()->json(['message' => 'User created successfully'], 201);
     }
 
-  
 }
 
